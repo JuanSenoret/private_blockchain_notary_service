@@ -1,4 +1,6 @@
 const Hapi = require('hapi');
+const RequestValidation = require('./model/request_validation');
+const RequestValidationDB = require('./db_access/request_validation_db');
 
 // Create a server with a host and port
 const server=Hapi.server({
@@ -6,19 +8,86 @@ const server=Hapi.server({
     port:8000
 });
 
+// Configuration
+const validationWindow = 300; // 5 min to sign the message and validate the submition
+
 server.route({
     method:'POST',
-    path:'/block',
+    path:'/requestValidation',
     handler:async function(request,h) {
         const payload = request.payload;
-        console.log(payload);
         let response;
-        response = h.response({"msg": "Successfully"});
-        response.code(200);
+        if(payload.hasOwnProperty("address")) {
+            if(payload.address) {
+                const requestValidationDB = new RequestValidationDB();
+                // Check if a previous request for the same address was added to the DB. Assumption only one request per Address at time
+                let prevRequestValidation = '';
+                await requestValidationDB.getLevelDBData(payload.address)
+                .then((value) => {
+                    prevRequestValidation = value;
+                })
+                .catch((err) => {
+                    console.log('No previous pending request');
+                });
+                if(!prevRequestValidation) {
+                    const requestValidation = new RequestValidation();
+                    requestValidation.address = payload.address;
+                    requestValidation.requestTimeStamp = new Date().getTime().toString().slice(0,-3);
+                    requestValidation.message = payload.address + ':' + requestValidation.requestTimeStamp + ':starRegistry';
+                    const addRequestValidationToDB = await requestValidationDB.addRequestValidation(requestValidation);
+                    if (addRequestValidationToDB) {
+                        response = h.response({"address": requestValidation.address,
+                                        "requestTimeStamp": requestValidation.requestTimeStamp,
+                                        "message": requestValidation.message,
+                                        "validationWindow": validationWindow});
+                        response.code(200);
+                    } else {
+                        response = h.response({"msg": "Not Successfully Done",
+                                            "error": "Request Validation could not be saved in our DB"});
+                        response.code(404);
+                    }
+                } else {
+                    // Check if request is not expired
+                    const jsonPrevReqValidation = JSON.parse(prevRequestValidation);
+                    const currentTimeStamp = new Date().getTime().toString().slice(0,-3);
+                    const currentvalidationWindow = validationWindow - (currentTimeStamp - jsonPrevReqValidation.requestTimeStamp);
+                    if ((currentTimeStamp - jsonPrevReqValidation.requestTimeStamp) > validationWindow) {
+                        // Delete the request validation from DB
+                        await requestValidationDB.deleteLevelDBData(jsonPrevReqValidation.address)
+                        .then(() => {
+                            response = h.response({"msg": "Validation Window expired. Please try again.",
+                                                "error": "Validation Window expired"});
+                            response.code(200);
+                        }).catch((err) => {
+                            response = h.response({"msg": "An error ocurred during deleting previous request. Please contact our support team",
+                                                "error": "An error ocurred during deleting previous request. Err: " + err});
+                            response.code(404);
+                        });
+                    } else {
+                        console.log('Request Validation Pending');
+                        response = h.response({"address": jsonPrevReqValidation.address,
+                                               "requestTimeStamp": jsonPrevReqValidation.requestTimeStamp,
+                                               "message": jsonPrevReqValidation.message,
+                                               "validationWindow": currentvalidationWindow});
+                        response.code(200);
+                    }
+                }
+            } else {
+                response = h.response({"msg": "Not Successfully Done",
+                                       "error": "Address key empty in request"});
+                response.code(404);
+            }
+        } else {
+            response = h.response({"msg": "Not Successfully Done",
+                                   "error": "No data in body request"});
+            response.code(404);
+        }
         response.header('Content-Type', 'application/json; charset=utf-8');
         return response;
     }
 });
+
+// TODO: Next step is create validate message endpoint to check if the messege signed in electrom with the address is the same like we have.
 
 // Start the server
 async function start() {

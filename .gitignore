@@ -1,3 +1,4 @@
 .idea
 node_modules/
-chaindata/
+DB_chaindata/
+DB_request_validation/
