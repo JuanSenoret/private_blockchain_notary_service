@@ -1,4 +1,6 @@
 const Hapi = require('hapi');
+const bitcoin = require('bitcoinjs-lib');
+const bitcoinMessage = require('bitcoinjs-message');
 const RequestValidation = require('./model/request_validation');
 const RequestValidationDB = require('./db_access/request_validation_db');
 
@@ -9,7 +11,7 @@ const server=Hapi.server({
 });
 
 // Configuration
-const validationWindow = 3000; // 5 min to sign the message and validate the submition
+const validationWindow = 300; // 5 min to sign the message and validate the submition
 
 // Request validation endpoint
 server.route({
@@ -113,6 +115,7 @@ server.route({
                     // Check if validationWindow is not expired
                     const currentTimeStamp = new Date().getTime().toString().slice(0,-3);
                     const jsonReqValidationData = JSON.parse(requestValidationData);
+                    const currentvalidationWindow = validationWindow - (currentTimeStamp - jsonReqValidationData.requestTimeStamp);
                     if ((currentTimeStamp - jsonReqValidationData.requestTimeStamp) > validationWindow) {
                         // Delete the request validation from DB
                         await requestValidationDB.deleteLevelDBData(jsonReqValidationData.address)
@@ -122,13 +125,51 @@ server.route({
                             response.code(200);
                         }).catch((err) => {
                             response = h.response({"msg": "An error ocurred during deleting previous request. Please contact our support team",
-                                                "error": "An error ocurred during deleting previous request. Err: " + err});
+                                                   "error": "An error ocurred during deleting previous request. Err: " + err});
                             response.code(404);
                         });
                     } else {
-                        response = h.response({"msg": "Successfully",
-                                           "error": ""});
-                        response.code(200);
+                        // Check if the message signature is already validated for this address
+                        if (jsonReqValidationData.messageSignature) {
+                            response = h.response({"address": jsonReqValidationData.address,
+                                                   "requestTimeStamp": jsonReqValidationData.requestTimeStamp,
+                                                   "message": jsonReqValidationData.message,
+                                                   "validationWindow": currentvalidationWindow,
+                                                   "messageSignature": "Success"});
+                            response.code(200);
+                        } else {
+                            let isMessageSignatureValid = false;
+                            try {
+                                isMessageSignatureValid = bitcoinMessage.verify(jsonReqValidationData.message, jsonReqValidationData.address, payload.signature);
+                                console.log(isMessageSignatureValid);
+                            } catch(err) {
+                                console.log('Server Error by verifiying message signature. ' + err);
+                            }
+                            if (isMessageSignatureValid) {
+                                // Update the request validation data for this address to validate the signature
+                                requestValidationData.messageSignature = true;
+                                const updateRequestValidationToDB = await requestValidationDB.addRequestValidation(jsonReqValidationData);
+                                if (updateRequestValidationToDB) {
+                                    response = h.response({"address": jsonReqValidationData.address,
+                                                           "requestTimeStamp": jsonReqValidationData.requestTimeStamp,
+                                                           "message": jsonReqValidationData.message,
+                                                           "validationWindow": currentvalidationWindow,
+                                                           "messageSignature": "Success"});
+                                    response.code(200);
+                                } else {
+                                    response = h.response({"msg": "An error occurred during DB update. Please try again to validate your message signature",
+                                                           "error": "Error updating request validation in DB"});
+                                    response.code(404);
+                                }
+                            } else {
+                                response = h.response({"address": jsonReqValidationData.address,
+                                                       "requestTimeStamp": jsonReqValidationData.requestTimeStamp,
+                                                       "message": jsonReqValidationData.message,
+                                                       "validationWindow": currentvalidationWindow,
+                                                       "messageSignature": "Fail"});
+                                response.code(200);
+                            }
+                        }
                     }
                 } else {
                     // No previous request validation
