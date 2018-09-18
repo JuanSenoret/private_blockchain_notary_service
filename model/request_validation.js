@@ -5,7 +5,8 @@ class RequestValidation{
 	constructor(){
      this.address = "",
      this.message = "",
-     this.requestTimeStamp = 0
+     this.requestTimeStamp = 0,
+     this.messageSignature = false
     }
 };
 

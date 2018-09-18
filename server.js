@@ -9,8 +9,9 @@ const server=Hapi.server({
 });
 
 // Configuration
-const validationWindow = 300; // 5 min to sign the message and validate the submition
+const validationWindow = 3000; // 5 min to sign the message and validate the submition
 
+// Request validation endpoint
 server.route({
     method:'POST',
     path:'/requestValidation',
@@ -87,7 +88,68 @@ server.route({
     }
 });
 
-// TODO: Next step is create validate message endpoint to check if the messege signed in electrom with the address is the same like we have.
+// TODO: Next step is create validate message endpoint to check if the message signed in electrom with the address is the same like we have.
+
+// Request message signature validate
+server.route({
+    method:'POST',
+    path:'/message-signature/validate',
+    handler:async function(request,h) { 
+        const payload = request.payload;
+        let response;
+        if(payload.hasOwnProperty("address") && payload.hasOwnProperty("signature")) {
+            if(payload.address && payload.signature) {
+                const requestValidationDB = new RequestValidationDB();
+                // Get the request validation data for the address
+                let requestValidationData = '';
+                await requestValidationDB.getLevelDBData(payload.address)
+                .then((value) => {
+                    requestValidationData = value;
+                })
+                .catch((err) => {
+                    console.log('No previous pending request');
+                });
+                if(requestValidationData) {
+                    // Check if validationWindow is not expired
+                    const currentTimeStamp = new Date().getTime().toString().slice(0,-3);
+                    const jsonReqValidationData = JSON.parse(requestValidationData);
+                    if ((currentTimeStamp - jsonReqValidationData.requestTimeStamp) > validationWindow) {
+                        // Delete the request validation from DB
+                        await requestValidationDB.deleteLevelDBData(jsonReqValidationData.address)
+                        .then(() => {
+                            response = h.response({"msg": "Validation Window expired. Please try again.",
+                                                "error": "Validation Window expired"});
+                            response.code(200);
+                        }).catch((err) => {
+                            response = h.response({"msg": "An error ocurred during deleting previous request. Please contact our support team",
+                                                "error": "An error ocurred during deleting previous request. Err: " + err});
+                            response.code(404);
+                        });
+                    } else {
+                        response = h.response({"msg": "Successfully",
+                                           "error": ""});
+                        response.code(200);
+                    }
+                } else {
+                    // No previous request validation
+                    response = h.response({"msg": "Please request a validation previous to validate your message signature",
+                                           "error": "No previous request validation data in DB"});
+                    response.code(404);
+                }
+            } else {
+                response = h.response({"msg": "Not Successfully Done",
+                                       "error": "address or signature key empty in request"});
+                response.code(404);
+            }
+        } else {
+            response = h.response({"msg": "Not Successfully Done",
+                                   "error": "address or signature parameter missing the request"});
+            response.code(404);
+        }
+        response.header('Content-Type', 'application/json; charset=utf-8');
+        return response;
+    }
+});
 
 // Start the server
 async function start() {
