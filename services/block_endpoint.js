@@ -51,6 +51,13 @@ class BlockEndPoint {
                         // TODO: add checking to verify if the star was already registered
                         const addedBlock = await blockChainDB.addBlock(newBlock);
                         if(addedBlock) {
+                            // Delete the request for validation of this address. A user can only submit a star per request validation
+                            await requestValidationDB.deleteLevelDBData(jsonReqValidationData.address)
+                            .then(() => {
+                                console.log('Request for validation properly deleted for address: ' + jsonReqValidationData.address);
+                            }).catch((err) => {
+                                console.log('Error deleting the request for validation. Address: ' + jsonReqValidationData.address);
+                            });
                             this.response.data = {
                                 "hash": addedBlock.hash,
                                 "height": addedBlock.height,

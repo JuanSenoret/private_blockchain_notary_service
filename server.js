@@ -6,6 +6,7 @@ const CheckValidationWindow = require('./common/validation_window_expiration');
 const BlockEndPoint = require('./services/block_endpoint');
 const RequestValidationEndPoint = require('./services/request_validation_endpoint');
 const MessageSignatureValidateEndPoint = require('./services/message_signature_validate_endpoint');
+const StarsAddressEndPoint = require('./services/stars_address_endpoint');
 
 // Create a server with a host and port
 const server=Hapi.server({
@@ -82,6 +83,21 @@ server.route({
     handler:async function(request,h) {
         const messageSignatureValidateEndPoint = new MessageSignatureValidateEndPoint(request.payload, validationWindow);
         const responseEndpoint = await messageSignatureValidateEndPoint.run();
+        const response = h.response(responseEndpoint.data);
+        response.code(responseEndpoint.code);
+        response.header('Content-Type', 'application/json; charset=utf-8');
+        return response;
+    }
+});
+
+// Request validation endpoint
+server.route({
+    method:'GET',
+    path:'/stars/address:{address}',
+    handler:async function(request,h) {
+        const address = encodeURIComponent(request.params.address);
+        const starsAddressEndPoint = new StarsAddressEndPoint(address);
+        const responseEndpoint = await starsAddressEndPoint.run();
         const response = h.response(responseEndpoint.data);
         response.code(responseEndpoint.code);
         response.header('Content-Type', 'application/json; charset=utf-8');
