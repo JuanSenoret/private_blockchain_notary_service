@@ -51,6 +51,36 @@ class RequestValidationDB {
         });
     }
 
+    // Get block height
+    getLevelDBHeight(){
+        let i = 0;
+        return new Promise(function(resolve, reject){
+          db.createReadStream().on('data', function(data) {
+            i++;
+          }).on('error', function(err) {
+            console.log('Unable to read data stream!', err)
+            reject(-1, err);
+          }).on('close', function() {
+            resolve(i);
+          });
+        });
+    }
+
+    // Get block height
+    getLevelDBItems(){
+        let items = [];
+        return new Promise(function(resolve, reject){
+          db.createReadStream().on('data', function(data) {
+            items.push(data);
+          }).on('error', function(err) {
+            console.log('Unable to read data stream!', err)
+            reject(items, err);
+          }).on('close', function() {
+            resolve(items);
+          });
+        });
+    }
+
     // Delete Request Vaidation data
     deleteLevelDBData(key){
         // return object as a single string

@@ -2,3 +2,4 @@
 node_modules/
 DB_chaindata/
 DB_request_validation/
+DB_blockchain/
