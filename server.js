@@ -1,7 +1,5 @@
 const Hapi = require('hapi');
-const SHA256 = require('crypto-js/sha256');
 const Blockchain = require('./db_access/blockchain_db');
-const Block = require('./model/block');
 const CheckValidationWindow = require('./common/validation_window_expiration');
 const BlockEndPoint = require('./services/block_endpoint');
 const RequestValidationEndPoint = require('./services/request_validation_endpoint');
@@ -108,27 +106,29 @@ server.route({
     }
 });
 
-// Endpoint to test add block in the blockchain
+// Endpoint to test existing star in the blockchain
 server.route({
-    method:'POST',
-    path:'/test/block',
+    method:'GET',
+    path:'/star/exist/{starHash}',
     handler:async function(request,h) {
         const blockChainDB = new Blockchain();
-        const payload = request.payload;
-        const jsonStarData = JSON.parse(JSON.stringify(payload.star));
-        const newBlock = new Block(jsonStarData.story,
-                                   jsonStarData.ra,
-                                   jsonStarData.dec,
-                                   payload.address,
-                                   SHA256(jsonStarData.ra + jsonStarData.dec).toString());
-        const addedBlock = await blockChainDB.addBlock(newBlock);
-        if(addedBlock) {
-            console.log(addedBlock);
+        const starHash = encodeURIComponent(request.params.starHash);
+        let blockByStarHash = '';
+        await blockChainDB.getBlockByHashStar(starHash)
+        .then((value) => {
+            blockByStarHash = value;
+        })
+        .catch((value, err) => {
+            blockByStarHash = value;
+            console.log('An error ocurred during fetching data from request validation DB. Error: ' + err);
+        });
+        if(blockByStarHash) {
+            console.log(blockByStarHash);
             response = h.response({"msg": "Successfully Done",
                                "error": ""});
             response.code(200);
         } else {
-            response = h.response({"msg": "NOT Successfully Done",
+            response = h.response({"msg": "Not found",
                                     "error": ""});
             response.code(404);
         }

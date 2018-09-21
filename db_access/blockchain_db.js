@@ -120,6 +120,24 @@ class Blockchain {
         });
       });
     }
+
+    // Get block by hash
+    getBlockByHashStar(hashStar){
+      let blockByHashStar = '';
+      return new Promise(function(resolve, reject){
+        db.createReadStream().on('data', function(data) {
+          const block = JSON.parse(data.value);
+          if(block.body.star.hashStar === hashStar) {
+            blockByHashStar = block;
+          }
+        }).on('error', function(err) {
+          console.log('Unable to read data stream!', err)
+          reject(blockByHashStar, err);
+        }).on('close', function() {
+          resolve(blockByHashStar);
+        });
+      });
+    }
   
     // Get block height
     getBlockHeight(){

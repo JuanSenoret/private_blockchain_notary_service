@@ -22,6 +22,7 @@ class StarBlockHeightEndPoint {
             });
             if(blockByHeight) {
                 const jsonBlockByHeight = JSON.parse(blockByHeight);
+                //console.log(jsonBlockByHeight);
                 this.response.data = {
                     "hash": jsonBlockByHeight.hash,
                     "height": jsonBlockByHeight.height,

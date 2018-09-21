@@ -43,34 +43,51 @@ class BlockEndPoint {
                     if(jsonReqValidationData.messageSignature) {
                         const blockChainDB = new Blockchain();
                         const jsonStarData = JSON.parse(JSON.stringify(this.payload.star));
-                        const newBlock = new Block(new Buffer(jsonStarData.story).toString('hex'),
-                                                   jsonStarData.ra,
-                                                   jsonStarData.dec,
-                                                   this.payload.address,
-                                                   SHA256(jsonStarData.ra + jsonStarData.dec).toString());
                         // TODO: add checking to verify if the star was already registered
-                        const addedBlock = await blockChainDB.addBlock(newBlock);
-                        if(addedBlock) {
-                            // Delete the request for validation of this address. A user can only submit a star per request validation
-                            await requestValidationDB.deleteLevelDBData(jsonReqValidationData.address)
-                            .then(() => {
-                                console.log('Request for validation properly deleted for address: ' + jsonReqValidationData.address);
-                            }).catch((err) => {
-                                console.log('Error deleting the request for validation. Address: ' + jsonReqValidationData.address);
-                            });
+                        let blockByStarHash = '';
+                        await blockChainDB.getBlockByHashStar(SHA256(jsonStarData.ra + jsonStarData.dec).toString())
+                        .then((value) => {
+                            blockByStarHash = value;
+                        })
+                        .catch((value, err) => {
+                            blockByStarHash = value;
+                            console.log('An error ocurred during fetching data from request validation DB. Error: ' + err);
+                        });
+                        if(blockByStarHash) {
                             this.response.data = {
-                                "hash": addedBlock.hash,
-                                "height": addedBlock.height,
-                                "address": addedBlock.body.address,
-                                "star": {
-                                    "ra": addedBlock.body.star.ra,
-                                    "dec": addedBlock.body.star.dec,
-                                    "story": addedBlock.body.star.story
-                                },
-                                "time": addedBlock.time,
-                                "previousBlockHash": addedBlock.previousBlockHash
+                                "msg": "You are trying to register an submitted star. Please register another star",
+                                "error": "Star already registered in blockchain DB"
                             };
-                            this.response.code = 200;
+                            this.response.code = 404;
+                        } else {
+                            const newBlock = new Block(new Buffer(jsonStarData.story).toString('hex'),
+                                                                  jsonStarData.ra,
+                                                                  jsonStarData.dec,
+                                                                  this.payload.address,
+                                                                  SHA256(jsonStarData.ra + jsonStarData.dec).toString());
+                            const addedBlock = await blockChainDB.addBlock(newBlock);
+                            if(addedBlock) {
+                                // Delete the request for validation of this address. A user can only submit a star per request validation
+                                await requestValidationDB.deleteLevelDBData(jsonReqValidationData.address)
+                                .then(() => {
+                                    console.log('Request for validation properly deleted for address: ' + jsonReqValidationData.address);
+                                }).catch((err) => {
+                                    console.log('Error deleting the request for validation. Address: ' + jsonReqValidationData.address);
+                                });
+                                this.response.data = {
+                                    "hash": addedBlock.hash,
+                                    "height": addedBlock.height,
+                                    "address": addedBlock.body.address,
+                                    "star": {
+                                        "ra": addedBlock.body.star.ra,
+                                        "dec": addedBlock.body.star.dec,
+                                        "story": addedBlock.body.star.story
+                                    },
+                                    "time": addedBlock.time,
+                                    "previousBlockHash": addedBlock.previousBlockHash
+                                };
+                                this.response.code = 200;
+                            }
                         }
                     }
                 }
