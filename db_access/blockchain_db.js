@@ -102,6 +102,24 @@ class Blockchain {
         });
       });
     }
+
+    // Get block by hash
+    getBlockByHash(hash){
+      let blockByHash = '';
+      return new Promise(function(resolve, reject){
+        db.createReadStream().on('data', function(data) {
+          const block = JSON.parse(data.value);
+          if(block.hash === hash) {
+            blockByHash = block;
+          }
+        }).on('error', function(err) {
+          console.log('Unable to read data stream!', err)
+          reject(blockByHash, err);
+        }).on('close', function() {
+          resolve(blockByHash);
+        });
+      });
+    }
   
     // Get block height
     getBlockHeight(){

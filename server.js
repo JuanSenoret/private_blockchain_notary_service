@@ -6,7 +6,8 @@ const CheckValidationWindow = require('./common/validation_window_expiration');
 const BlockEndPoint = require('./services/block_endpoint');
 const RequestValidationEndPoint = require('./services/request_validation_endpoint');
 const MessageSignatureValidateEndPoint = require('./services/message_signature_validate_endpoint');
-const StarsAddressEndPoint = require('./services/stars_address_endpoint');
+const StarsBlockAddressEndPoint = require('./services/stars_block_address_endpoint');
+const StarBlockHashEndPoint = require('./services/star_block_hash_endpoint');
 
 // Create a server with a host and port
 const server=Hapi.server({
@@ -61,14 +62,29 @@ server.route({
     }
 });
 
-// Request validation endpoint
+// Fetch star blocks for address
 server.route({
     method:'GET',
     path:'/stars/address:{address}',
     handler:async function(request,h) {
         const address = encodeURIComponent(request.params.address);
-        const starsAddressEndPoint = new StarsAddressEndPoint(address);
-        const responseEndpoint = await starsAddressEndPoint.run();
+        const starsBlockAddressEndPoint = new StarsBlockAddressEndPoint(address);
+        const responseEndpoint = await starsBlockAddressEndPoint.run();
+        const response = h.response(responseEndpoint.data);
+        response.code(responseEndpoint.code);
+        response.header('Content-Type', 'application/json; charset=utf-8');
+        return response;
+    }
+});
+
+// Request validation endpoint
+server.route({
+    method:'GET',
+    path:'/stars/hash:{hash}',
+    handler:async function(request,h) {
+        const hash = encodeURIComponent(request.params.hash);
+        const starBlockHashEndPoint = new StarBlockHashEndPoint(hash);
+        const responseEndpoint = await starBlockHashEndPoint.run();
         const response = h.response(responseEndpoint.data);
         response.code(responseEndpoint.code);
         response.header('Content-Type', 'application/json; charset=utf-8');

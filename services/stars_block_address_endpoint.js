@@ -1,6 +1,6 @@
 const Blockchain = require('../db_access/blockchain_db');
 
-class StarsAddressEndPoint {
+class StarsBlockAddressEndPoint {
     constructor(address) {
         this.response = {
             "data": {},
@@ -60,4 +60,4 @@ class StarsAddressEndPoint {
     }
 }
 
-module.exports = StarsAddressEndPoint;
+module.exports = StarsBlockAddressEndPoint;
