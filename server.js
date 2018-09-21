@@ -8,6 +8,7 @@ const RequestValidationEndPoint = require('./services/request_validation_endpoin
 const MessageSignatureValidateEndPoint = require('./services/message_signature_validate_endpoint');
 const StarsBlockAddressEndPoint = require('./services/stars_block_address_endpoint');
 const StarBlockHashEndPoint = require('./services/star_block_hash_endpoint');
+const StarBlockHeightEndPoint = require('./services/star_block_height_endpoint');
 
 // Create a server with a host and port
 const server=Hapi.server({
@@ -77,7 +78,7 @@ server.route({
     }
 });
 
-// Request validation endpoint
+// Fetch star block for hash
 server.route({
     method:'GET',
     path:'/stars/hash:{hash}',
@@ -85,6 +86,21 @@ server.route({
         const hash = encodeURIComponent(request.params.hash);
         const starBlockHashEndPoint = new StarBlockHashEndPoint(hash);
         const responseEndpoint = await starBlockHashEndPoint.run();
+        const response = h.response(responseEndpoint.data);
+        response.code(responseEndpoint.code);
+        response.header('Content-Type', 'application/json; charset=utf-8');
+        return response;
+    }
+});
+
+// Fetch star block for height
+server.route({
+    method:'GET',
+    path:'/block/{height}',
+    handler:async function(request,h) {
+        const height = encodeURIComponent(request.params.height);
+        const starBlockHeightEndPoint = new StarBlockHeightEndPoint(height);
+        const responseEndpoint = await starBlockHeightEndPoint.run();
         const response = h.response(responseEndpoint.data);
         response.code(responseEndpoint.code);
         response.header('Content-Type', 'application/json; charset=utf-8');

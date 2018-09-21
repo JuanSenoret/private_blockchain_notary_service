@@ -11,9 +11,9 @@ class StarBlockHashEndPoint {
 
     async run() {
         if(this.hash) {
-            const blocchain = new Blockchain();
+            const blockhain = new Blockchain();
             let blockByHash = '';
-            await blocchain.getBlockByHash(this.hash)
+            await blockhain.getBlockByHash(this.hash)
             .then((value) => {
                 blockByHash = value;
             })
@@ -40,7 +40,7 @@ class StarBlockHashEndPoint {
             } else {
                 this.response.data = {
                     "msg": "No block found for this hash",
-                    "error": "No block found in the blockchain for the address " + this.hash
+                    "error": "No block found in the blockchain for the hash " + this.hash
                 };
                 this.response.code = 404;
             }
