@@ -19,35 +19,6 @@ const validationWindow = 300; // 5 min to sign the message and validate the subm
 const whiteListTimeWall = 5*1000; // Every 2 second check the list of registered address to delete the expired register address
 const checkValidationWindow = new CheckValidationWindow(validationWindow);
 
-// Endpoint to test add block in the blockchain
-server.route({
-    method:'POST',
-    path:'/test/block',
-    handler:async function(request,h) {
-        const blockChainDB = new Blockchain();
-        const payload = request.payload;
-        const jsonStarData = JSON.parse(JSON.stringify(payload.star));
-        const newBlock = new Block(jsonStarData.story,
-                                   jsonStarData.ra,
-                                   jsonStarData.dec,
-                                   payload.address,
-                                   SHA256(jsonStarData.ra + jsonStarData.dec).toString());
-        const addedBlock = await blockChainDB.addBlock(newBlock);
-        if(addedBlock) {
-            console.log(addedBlock);
-            response = h.response({"msg": "Successfully Done",
-                               "error": ""});
-            response.code(200);
-        } else {
-            response = h.response({"msg": "NOT Successfully Done",
-                                    "error": ""});
-            response.code(404);
-        }
-        response.header('Content-Type', 'application/json; charset=utf-8');
-        return response;
-    }
-});
-
 // Star registration endpoint
 server.route({
     method:'POST',
@@ -100,6 +71,35 @@ server.route({
         const responseEndpoint = await starsAddressEndPoint.run();
         const response = h.response(responseEndpoint.data);
         response.code(responseEndpoint.code);
+        response.header('Content-Type', 'application/json; charset=utf-8');
+        return response;
+    }
+});
+
+// Endpoint to test add block in the blockchain
+server.route({
+    method:'POST',
+    path:'/test/block',
+    handler:async function(request,h) {
+        const blockChainDB = new Blockchain();
+        const payload = request.payload;
+        const jsonStarData = JSON.parse(JSON.stringify(payload.star));
+        const newBlock = new Block(jsonStarData.story,
+                                   jsonStarData.ra,
+                                   jsonStarData.dec,
+                                   payload.address,
+                                   SHA256(jsonStarData.ra + jsonStarData.dec).toString());
+        const addedBlock = await blockChainDB.addBlock(newBlock);
+        if(addedBlock) {
+            console.log(addedBlock);
+            response = h.response({"msg": "Successfully Done",
+                               "error": ""});
+            response.code(200);
+        } else {
+            response = h.response({"msg": "NOT Successfully Done",
+                                    "error": ""});
+            response.code(404);
+        }
         response.header('Content-Type', 'application/json; charset=utf-8');
         return response;
     }

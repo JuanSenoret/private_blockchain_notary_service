@@ -43,7 +43,7 @@ class BlockEndPoint {
                     if(jsonReqValidationData.messageSignature) {
                         const blockChainDB = new Blockchain();
                         const jsonStarData = JSON.parse(JSON.stringify(this.payload.star));
-                        const newBlock = new Block(jsonStarData.story,
+                        const newBlock = new Block(new Buffer(jsonStarData.story).toString('hex'),
                                                    jsonStarData.ra,
                                                    jsonStarData.dec,
                                                    this.payload.address,

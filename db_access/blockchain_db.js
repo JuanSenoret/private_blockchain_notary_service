@@ -84,6 +84,24 @@ class Blockchain {
       });
       return exist;
     }
+
+    // Get blocks by address
+    getBlocksByAddress(address){
+      let blocks = [];
+      return new Promise(function(resolve, reject){
+        db.createReadStream().on('data', function(data) {
+          const block = JSON.parse(data.value);
+          if(block.body.address === address) {
+            blocks.push(block);
+          }
+        }).on('error', function(err) {
+          console.log('Unable to read data stream!', err)
+          reject(blocks, err);
+        }).on('close', function() {
+          resolve(blocks);
+        });
+      });
+    }
   
     // Get block height
     getBlockHeight(){
