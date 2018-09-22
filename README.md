@@ -71,10 +71,7 @@ npm start
 * **Sample Call:**
 
   ```
-  curl -X "POST" "http://localhost:8000/requestValidation" \
-     -H 'Content-Type: application/json; charset=utf-8' \
-     -d $'{
-  "address": "142BDCeSGbXjWKaAnYXbMpZ6sbrSAo3DpZ"}'
+  curl -X "POST" "http://localhost:8000/requestValidation" -H 'Content-Type: application/json; charset=utf-8' -d $'{"address": "142BDCeSGbXjWKaAnYXbMpZ6sbrSAo3DpZ"}'
   ```
 
 ### Post Message Signature Validation
@@ -122,11 +119,7 @@ npm start
 * **Sample Call:**
 
   ```
-  curl -X "POST" "http://localhost:8000/message-signature/validate" \
-     -H 'Content-Type: application/json; charset=utf-8' \
-     -d $'{
-  "address": "142BDCeSGbXjWKaAnYXbMpZ6sbrSAo3DpZ",
-  "signature": "H6ZrGrF0Y4rMGBMRT2+hHWGbThTIyhBS0dNKQRov9Yg6GgXcHxtO9GJN4nwD2yNXpnXHTWU9i+qdw5vpsooryLU="}'
+  curl -X "POST" "http://localhost:8000/message-signature/validate" -H 'Content-Type: application/json; charset=utf-8' -d $'{"address": "142BDCeSGbXjWKaAnYXbMpZ6sbrSAo3DpZ", "signature": "H6ZrGrF0Y4rMGBMRT2+hHWGbThTIyhBS0dNKQRov9Yg6GgXcHxtO9GJN4nwD2yNXpnXHTWU9i+qdw5vpsooryLU="}'
   ```
 
 ### Post Star registration Endpoint
@@ -182,15 +175,7 @@ npm start
 * **Sample Call:**
 
   ```
-  curl -X "POST" "http://localhost:8000/block" \
-     -H 'Content-Type: application/json; charset=utf-8' \
-     -d $'{
-  "address": "142BDCeSGbXjWKaAnYXbMpZ6sbrSAo3DpZ",
-  "star": {
-    "dec": "-26° 29'\'' 24.9",
-    "ra": "16h 29m 1.0s",
-    "story": "Found star using https://www.google.com/sky/"
-  }}'
+  curl -X "POST" "http://localhost:8000/block" -H 'Content-Type: application/json; charset=utf-8' -d $'{"address":"142BDCeSGbXjWKaAnYXbMpZ6sbrSAo3DpZ","star": {"dec": "-26° 29'\'' 24.9", "ra": "16h 29m 1.0s", "story": "Found star using https://www.google.com/sky/"}}'
   ```
 
 ### Get Stars Blocks by Address
