@@ -1,4 +1,4 @@
-# private_blockchain_notary_service
+# Private Blockchain Notary Service
 
 For this project, we’ll build a RESTful API using a Node.js framework that will interface with the private blockchain we completed Project 4 - "Private Blockchain Notary Service". We’ll want to build this project out in steps.
 
