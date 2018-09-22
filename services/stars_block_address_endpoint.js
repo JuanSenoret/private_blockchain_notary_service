@@ -21,7 +21,7 @@ class StarsBlockAddressEndPoint {
                 blocksByAddress = value;
                 console.log('An error ocurred during fetching data from request validation DB. Error: ' + err);
             });
-            if(blocksByAddress) {
+            if(blocksByAddress.length > 0) {
                 const responseArray = [];
                 blocksByAddress.forEach((element) => {
                     responseArray.push({

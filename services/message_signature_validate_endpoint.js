@@ -1,3 +1,4 @@
+const bitcoin = require('bitcoinjs-lib');
 const bitcoinMessage = require('bitcoinjs-message');
 const CheckPayload = require('../common/check_payload');
 const RequestValidationDB = require('../db_access/request_validation_db');

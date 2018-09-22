@@ -11,7 +11,7 @@
     "type": "git",
     "url": "git+https://github.com/JuanSenoret/private_blockchain_notary_service.git"
   },
-  "author": "",
+  "author": "Juan Senoret",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/JuanSenoret/private_blockchain_notary_service/issues"
